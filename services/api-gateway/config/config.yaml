@@ -1,0 +1,13 @@
+server:
+  port: 8080
+  timeout: 30s
+
+services:
+  event_service:
+    url: "localhost:50051"
+    timeout: 10s
+
+logger:
+  level: debug
+  format: json
+  

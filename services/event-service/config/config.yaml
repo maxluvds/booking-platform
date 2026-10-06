@@ -1,0 +1,28 @@
+server:
+  port: 50051
+  timeout: 30s
+
+database:
+  host: localhost
+  port: 5433
+  user: postgres
+  password: postgres
+  dbname: events
+  sslmode: disable
+  max_connections: 100
+  url: "pgx://postgres:postgres@localhost:5433/events?sslmode=disable"
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+kafka:
+  brokers:
+    - localhost:9092
+  group_id: event-service
+
+logger:
+  level: debug
+  format: text            

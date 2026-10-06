@@ -1,0 +1,24 @@
+@"
+# Binary files
+bin/
+*.exe
+
+# Dependencies
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.secret
+
+# Logs
+*.log
+"@ | Out-File -FilePath .gitignore -Encoding utf8
