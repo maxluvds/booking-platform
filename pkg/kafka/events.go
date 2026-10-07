@@ -29,3 +29,12 @@ type EventDeletedMessage struct {
 	EventID   int64     `json:"event_id"`
 	Timestamp time.Time `json:"timestamp"`
 }
+
+type BookingCreatedMessage struct {
+	BookingID  int64     `json:"booking_id"`
+	UserID     int64     `json:"user_id"`
+	EventID    int64     `json:"event_id"`
+	Seats      int       `json:"seats"`
+	TotalPrice float64   `json:"total_price"`
+	Timestamp  time.Time `json:"timestamp"`
+}

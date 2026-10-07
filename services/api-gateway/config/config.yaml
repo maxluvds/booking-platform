@@ -9,6 +9,9 @@ services:
   user_service:
     url: "localhost:50053"
     timeout: 10s
+  booking_service:
+    url: "localhost:50054"
+    timeout: 10s
 
 logger:
   level: debug

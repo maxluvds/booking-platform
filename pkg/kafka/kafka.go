@@ -71,3 +71,17 @@ func (c *Consumer) Read(ctx context.Context) (kafka.Message, error) {
 func (c *Consumer) Close() error {
 	return c.reader.Close()
 }
+
+func (p *Producer) SendRaw(ctx context.Context, key string, value []byte) error {
+	message := kafka.Message{
+		Key:   []byte(key),
+		Value: value,
+		Time:  time.Now(),
+	}
+
+	if err := p.writer.WriteMessages(ctx, message); err != nil {
+		return fmt.Errorf("failed to write message: %w", err)
+	}
+
+	return nil
+}

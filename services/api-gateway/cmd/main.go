@@ -45,8 +45,20 @@ func main() {
 	defer userClient.Close()
 	log.Info("Connected to User Service", "url", cfg.Services.UserService.URL)
 
+	bookingClient, err := client.NewBookingClient(
+		cfg.Services.BookingService.URL,
+		cfg.Services.BookingService.Timeout,
+	)
+	if err != nil {
+		log.Error("Failed to create booking client", "error", err)
+		return
+	}
+	defer bookingClient.Close()
+	log.Info("Connected to Booking Service", "url", cfg.Services.BookingService.URL)
+
 	eventHandler := handler.NewEventHandler(eventClient)
 	authHandler := handler.NewAuthHandler(userClient)
+	bookingHandler := handler.NewBookingHandler(bookingClient)
 
 	mux := http.NewServeMux()
 
@@ -55,19 +67,23 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
+	authMiddleware := middleware.JWTAuth(userClient, log)
+
 	mux.HandleFunc("POST /api/v1/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
-
-	authMiddleware := middleware.JWTAuth(userClient, log)
 	mux.Handle("GET /api/v1/auth/me", authMiddleware(http.HandlerFunc(authHandler.GetMe)))
-
-	mux.Handle("POST /api/v1/events", authMiddleware(http.HandlerFunc(eventHandler.CreateEvent)))
-	mux.Handle("PUT /api/v1/events/{id}", authMiddleware(http.HandlerFunc(eventHandler.UpdateEvent)))
-	mux.Handle("DELETE /api/v1/events/{id}", authMiddleware(http.HandlerFunc(eventHandler.DeleteEvent)))
 
 	mux.HandleFunc("GET /api/v1/events", eventHandler.ListEvents)
 	mux.HandleFunc("GET /api/v1/events/{id}", eventHandler.GetEvent)
 	mux.HandleFunc("GET /api/v1/events/{id}/seats", eventHandler.GetAvailableSeats)
+	mux.Handle("POST /api/v1/events", authMiddleware(http.HandlerFunc(eventHandler.CreateEvent)))
+	mux.Handle("PUT /api/v1/events/{id}", authMiddleware(http.HandlerFunc(eventHandler.UpdateEvent)))
+	mux.Handle("DELETE /api/v1/events/{id}", authMiddleware(http.HandlerFunc(eventHandler.DeleteEvent)))
+
+	mux.Handle("POST /api/v1/bookings", authMiddleware(http.HandlerFunc(bookingHandler.CreateBooking)))
+	mux.Handle("GET /api/v1/bookings", authMiddleware(http.HandlerFunc(bookingHandler.ListUserBookings)))
+	mux.Handle("GET /api/v1/bookings/{id}", authMiddleware(http.HandlerFunc(bookingHandler.GetBooking)))
+	mux.Handle("DELETE /api/v1/bookings/{id}", authMiddleware(http.HandlerFunc(bookingHandler.CancelBooking)))
 
 	server := &http.Server{
 		Addr:    ":" + cfg.Server.Port,

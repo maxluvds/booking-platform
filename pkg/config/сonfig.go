@@ -16,6 +16,7 @@ type Config struct {
 	Logger   LoggerConfig   `yaml:"logger"`
 	Services ServicesConfig `yaml:"services"`
 	JWT      JWTConfig      `yaml:"jwt"`
+	Outbox   OutboxConfig   `yaml:"outbox"`
 }
 
 type JWTConfig struct {
@@ -58,14 +59,19 @@ type LoggerConfig struct {
 }
 
 type ServicesConfig struct {
-	EventService ServiceConfig `yaml:"event_service"`
-	UserService  ServiceConfig `yaml:"user_service"`
-
+	EventService   ServiceConfig `yaml:"event_service"`
+	UserService    ServiceConfig `yaml:"user_service"`
+	BookingService ServiceConfig `yaml:"booking_service"`
 }
 
 type ServiceConfig struct {
 	URL     string        `yaml:"url"`
 	Timeout time.Duration `yaml:"timeout"`
+}
+
+type OutboxConfig struct {
+	Interval  time.Duration `yaml:"interval"`
+	BatchSize int           `yaml:"batch_size"`
 }
 
 func Load(configPath string) (*Config, error) {
