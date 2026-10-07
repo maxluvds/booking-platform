@@ -10,6 +10,7 @@ import (
 	"github.com/maxluvds/booking-platform/pkg/logger"
 	"github.com/maxluvds/booking-platform/services/api-gateway/internal/client"
 	"github.com/maxluvds/booking-platform/services/api-gateway/internal/handler"
+	"github.com/maxluvds/booking-platform/services/api-gateway/internal/middleware"
 )
 
 func main() {
@@ -33,7 +34,19 @@ func main() {
 	defer eventClient.Close()
 	log.Info("Connected to Event Service", "url", cfg.Services.EventService.URL)
 
+	userClient, err := client.NewUserClient(
+		cfg.Services.UserService.URL,
+		cfg.Services.UserService.Timeout,
+	)
+	if err != nil {
+		log.Error("Failed to create user client", "error", err)
+		return
+	}
+	defer userClient.Close()
+	log.Info("Connected to User Service", "url", cfg.Services.UserService.URL)
+
 	eventHandler := handler.NewEventHandler(eventClient)
+	authHandler := handler.NewAuthHandler(userClient)
 
 	mux := http.NewServeMux()
 
@@ -42,11 +55,18 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	mux.HandleFunc("POST /api/v1/events", eventHandler.CreateEvent)
+	mux.HandleFunc("POST /api/v1/auth/register", authHandler.Register)
+	mux.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
+
+	authMiddleware := middleware.JWTAuth(userClient, log)
+	mux.Handle("GET /api/v1/auth/me", authMiddleware(http.HandlerFunc(authHandler.GetMe)))
+
+	mux.Handle("POST /api/v1/events", authMiddleware(http.HandlerFunc(eventHandler.CreateEvent)))
+	mux.Handle("PUT /api/v1/events/{id}", authMiddleware(http.HandlerFunc(eventHandler.UpdateEvent)))
+	mux.Handle("DELETE /api/v1/events/{id}", authMiddleware(http.HandlerFunc(eventHandler.DeleteEvent)))
+
 	mux.HandleFunc("GET /api/v1/events", eventHandler.ListEvents)
 	mux.HandleFunc("GET /api/v1/events/{id}", eventHandler.GetEvent)
-	mux.HandleFunc("PUT /api/v1/events/{id}", eventHandler.UpdateEvent)
-	mux.HandleFunc("DELETE /api/v1/events/{id}", eventHandler.DeleteEvent)
 	mux.HandleFunc("GET /api/v1/events/{id}/seats", eventHandler.GetAvailableSeats)
 
 	server := &http.Server{

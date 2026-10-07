@@ -6,8 +6,10 @@ services:
   event_service:
     url: "localhost:50051"
     timeout: 10s
+  user_service:
+    url: "localhost:50053"
+    timeout: 10s
 
 logger:
   level: debug
-  format: json
-  
+  format: text

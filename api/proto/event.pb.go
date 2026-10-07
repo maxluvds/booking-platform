@@ -4,7 +4,7 @@
 // 	protoc        v4.25.1
 // source: api/proto/event.proto
 
-package event
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -862,7 +862,7 @@ const file_api_proto_event_proto_rawDesc = "" +
 	"ListEvents\x12\x18.event.ListEventsRequest\x1a\x19.event.ListEventsResponse\x12>\n" +
 	"\vUpdateEvent\x12\x19.event.UpdateEventRequest\x1a\x14.event.EventResponse\x12D\n" +
 	"\vDeleteEvent\x12\x19.event.DeleteEventRequest\x1a\x1a.event.DeleteEventResponse\x12V\n" +
-	"\x11GetAvailableSeats\x12\x1f.event.GetAvailableSeatsRequest\x1a .event.GetAvailableSeatsResponseB:Z8github.com/maxluvds/booking-platform/api/proto/gen/eventb\x06proto3"
+	"\x11GetAvailableSeats\x12\x1f.event.GetAvailableSeatsRequest\x1a .event.GetAvailableSeatsResponseB6Z4github.com/maxluvds/booking-platform/api/proto;protob\x06proto3"
 
 var (
 	file_api_proto_event_proto_rawDescOnce sync.Once

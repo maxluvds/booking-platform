@@ -15,6 +15,13 @@ type Config struct {
 	Kafka    KafkaConfig    `yaml:"kafka"`
 	Logger   LoggerConfig   `yaml:"logger"`
 	Services ServicesConfig `yaml:"services"`
+	JWT      JWTConfig      `yaml:"jwt"`
+}
+
+type JWTConfig struct {
+	Secret     string        `yaml:"secret"`
+	AccessTTL  time.Duration `yaml:"access_ttl"`
+	RefreshTTL time.Duration `yaml:"refresh_ttl"`
 }
 
 type ServerConfig struct {
@@ -52,6 +59,8 @@ type LoggerConfig struct {
 
 type ServicesConfig struct {
 	EventService ServiceConfig `yaml:"event_service"`
+	UserService  ServiceConfig `yaml:"user_service"`
+
 }
 
 type ServiceConfig struct {
@@ -102,6 +111,9 @@ func (c *Config) overrideFromEnv() {
 	}
 	if url := os.Getenv("EVENT_SERVICE_URL"); url != "" {
 		c.Services.EventService.URL = url
+	}
+	if secret := os.Getenv("JWT_SECRET"); secret != "" {
+		c.JWT.Secret = secret
 	}
 }
 

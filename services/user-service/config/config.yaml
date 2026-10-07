@@ -1,0 +1,22 @@
+server:
+  port: 50053
+  timeout: 30s
+
+database:
+  host: localhost
+  port: 5433
+  user: postgres
+  password: postgres
+  dbname: users
+  sslmode: disable
+  max_connections: 100
+  url: "pgx://postgres:postgres@localhost:5433/users?sslmode=disable"
+
+jwt:
+  secret: "your-super-secret-key-change-in-production"
+  access_ttl: 15m
+  refresh_ttl: 168h
+
+logger:
+  level: debug
+  format: text
