@@ -3,17 +3,23 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/maxluvds/booking-platform/pkg/kafka"
 	"github.com/maxluvds/booking-platform/services/event-service/internal/domain"
 	"github.com/maxluvds/booking-platform/services/event-service/internal/repository"
 )
 
 type EventUseCase struct {
-	repo *repository.EventRepository
+	repo          *repository.EventRepository
+	kafkaProducer *kafka.Producer
 }
 
-func NewEventUseCase(repo *repository.EventRepository) *EventUseCase {
-	return &EventUseCase{repo: repo}
+func NewEventUseCase(repo *repository.EventRepository, kafkaProducer *kafka.Producer) *EventUseCase {
+	return &EventUseCase{
+		repo:          repo,
+		kafkaProducer: kafkaProducer,
+	}
 }
 
 func (uc *EventUseCase) Create(ctx context.Context, req *domain.CreateEventRequest) (*domain.Event, error) {
@@ -30,7 +36,26 @@ func (uc *EventUseCase) Create(ctx context.Context, req *domain.CreateEventReque
 		return nil, fmt.Errorf("price cannot be negative")
 	}
 
-	return uc.repo.Create(ctx, req)
+	event, err := uc.repo.Create(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	message := kafka.EventCreatedMessage{
+		EventID:   event.ID,
+		Title:     event.Title,
+		City:      event.City,
+		Category:  event.Category,
+		Date:      event.Date,
+		Price:     event.Price,
+		Timestamp: time.Now(),
+	}
+
+	if err := uc.kafkaProducer.Send(ctx, fmt.Sprintf("%d", event.ID), message); err != nil {
+		fmt.Printf("Failed to send Kafka message: %v\n", err)
+	}
+
+	return event, nil
 }
 
 func (uc *EventUseCase) GetByID(ctx context.Context, id int64) (*domain.Event, error) {

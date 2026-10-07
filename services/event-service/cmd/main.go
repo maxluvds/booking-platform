@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net"
 	"os"
 	"os/signal"
@@ -12,6 +13,7 @@ import (
 	pb "github.com/maxluvds/booking-platform/api/proto"
 	"github.com/maxluvds/booking-platform/pkg/config"
 	"github.com/maxluvds/booking-platform/pkg/database"
+	"github.com/maxluvds/booking-platform/pkg/kafka"
 	"github.com/maxluvds/booking-platform/pkg/logger"
 	"github.com/maxluvds/booking-platform/services/event-service/internal/delivery"
 	"github.com/maxluvds/booking-platform/services/event-service/internal/repository"
@@ -50,8 +52,13 @@ func main() {
 	defer db.Close()
 	log.Info("Database connected successfully")
 
+	log.Info("Connecting to Kafka...")
+	kafkaProducer := kafka.NewProducer(cfg.Kafka.Brokers, kafka.TopicEventCreated)
+	defer kafkaProducer.Close()
+	log.Info("Kafka producer created successfully")
+
 	eventRepo := repository.NewEventRepository(db.Conn())
-	eventUsecase := usecase.NewEventUseCase(eventRepo)
+	eventUsecase := usecase.NewEventUseCase(eventRepo, kafkaProducer)
 	grpcHandler := delivery.NewEventGRPCHandler(eventUsecase)
 
 	log.Info("Server settings",
@@ -86,5 +93,6 @@ func main() {
 	log.Info("Shutting down gRPC server...")
 	grpcServer.GracefulStop()
 	log.Info("Event Service stopped")
-}
 
+	_ = context.Background()
+}
