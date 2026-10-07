@@ -25,6 +25,11 @@ type JWTConfig struct {
 	RefreshTTL time.Duration `yaml:"refresh_ttl"`
 }
 
+type OutboxConfig struct {
+	Interval  time.Duration `yaml:"interval"`
+	BatchSize int           `yaml:"batch_size"`
+}
+
 type ServerConfig struct {
 	Port    string        `yaml:"port"`
 	Timeout time.Duration `yaml:"timeout"`
@@ -69,11 +74,6 @@ type ServiceConfig struct {
 	Timeout time.Duration `yaml:"timeout"`
 }
 
-type OutboxConfig struct {
-	Interval  time.Duration `yaml:"interval"`
-	BatchSize int           `yaml:"batch_size"`
-}
-
 func Load(configPath string) (*Config, error) {
 	data, err := os.ReadFile(configPath)
 	if err != nil {
@@ -106,20 +106,58 @@ func (c *Config) overrideFromEnv() {
 	if dbname := os.Getenv("DB_NAME"); dbname != "" {
 		c.Database.DBName = dbname
 	}
+	if sslmode := os.Getenv("DB_SSLMODE"); sslmode != "" {
+		c.Database.SSLMode = sslmode
+	}
+
+	if c.Database.Host != "" && c.Database.DBName != "" {
+		sslmode := c.Database.SSLMode
+		if sslmode == "" {
+			sslmode = "disable"
+		}
+		c.Database.URL = fmt.Sprintf("pgx://%s:%s@%s:%d/%s?sslmode=%s",
+			c.Database.User,
+			c.Database.Password,
+			c.Database.Host,
+			c.Database.Port,
+			c.Database.DBName,
+			sslmode,
+		)
+	}
+
 	if redisHost := os.Getenv("REDIS_HOST"); redisHost != "" {
 		c.Redis.Host = redisHost
 	}
 	if redisPort := os.Getenv("REDIS_PORT"); redisPort != "" {
 		fmt.Sscanf(redisPort, "%d", &c.Redis.Port)
 	}
+
 	if kafkaBrokers := os.Getenv("KAFKA_BROKERS"); kafkaBrokers != "" {
 		c.Kafka.Brokers = []string{kafkaBrokers}
 	}
+	if groupID := os.Getenv("KAFKA_GROUP_ID"); groupID != "" {
+		c.Kafka.GroupID = groupID
+	}
+
 	if url := os.Getenv("EVENT_SERVICE_URL"); url != "" {
 		c.Services.EventService.URL = url
 	}
+	if url := os.Getenv("USER_SERVICE_URL"); url != "" {
+		c.Services.UserService.URL = url
+	}
+	if url := os.Getenv("BOOKING_SERVICE_URL"); url != "" {
+		c.Services.BookingService.URL = url
+	}
+
 	if secret := os.Getenv("JWT_SECRET"); secret != "" {
 		c.JWT.Secret = secret
+	}
+
+	if level := os.Getenv("LOG_LEVEL"); level != "" {
+		c.Logger.Level = level
+	}
+	if format := os.Getenv("LOG_FORMAT"); format != "" {
+		c.Logger.Format = format
 	}
 }
 
