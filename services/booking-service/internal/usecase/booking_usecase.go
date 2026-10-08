@@ -6,17 +6,29 @@ import (
 	"fmt"
 
 	"github.com/maxluvds/booking-platform/services/booking-service/internal/domain"
-	"github.com/maxluvds/booking-platform/services/booking-service/internal/repository"
 )
 
+type BookingRepository interface {
+	Create(ctx context.Context, booking *domain.Booking, outboxEvent *domain.OutboxEvent) (*domain.Booking, error)
+	GetByID(ctx context.Context, id int64) (*domain.Booking, error)
+	ListByUser(ctx context.Context, userID int64) ([]*domain.Booking, error)
+	UpdateStatus(ctx context.Context, id int64, status domain.BookingStatus) error
+}
+
+type OutboxRepository interface {
+	GetPending(ctx context.Context, limit int) ([]*domain.OutboxEvent, error)
+	MarkAsSent(ctx context.Context, id int64) error
+	MarkAsFailed(ctx context.Context, id int64, errMsg string) error
+}
+
 type BookingUseCase struct {
-	bookingRepo *repository.BookingRepository
-	outboxRepo  *repository.OutboxRepository
+	bookingRepo BookingRepository
+	outboxRepo  OutboxRepository
 }
 
 func NewBookingUseCase(
-	bookingRepo *repository.BookingRepository,
-	outboxRepo *repository.OutboxRepository,
+	bookingRepo BookingRepository,
+	outboxRepo OutboxRepository,
 ) *BookingUseCase {
 	return &BookingUseCase{
 		bookingRepo: bookingRepo,

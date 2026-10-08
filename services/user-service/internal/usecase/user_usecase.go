@@ -9,15 +9,20 @@ import (
 
 	"github.com/maxluvds/booking-platform/services/user-service/internal/auth"
 	"github.com/maxluvds/booking-platform/services/user-service/internal/domain"
-	"github.com/maxluvds/booking-platform/services/user-service/internal/repository"
 )
 
+type UserRepository interface {
+	Create(ctx context.Context, user *domain.User) (*domain.User, error)
+	GetByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetByID(ctx context.Context, id int64) (*domain.User, error)
+}
+
 type UserUseCase struct {
-	repo       *repository.UserRepository
+	repo       UserRepository
 	jwtManager *auth.JWTManager
 }
 
-func NewUserUseCase(repo *repository.UserRepository, jwtManager *auth.JWTManager) *UserUseCase {
+func NewUserUseCase(repo UserRepository, jwtManager *auth.JWTManager) *UserUseCase {
 	return &UserUseCase{
 		repo:       repo,
 		jwtManager: jwtManager,

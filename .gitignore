@@ -17,4 +17,7 @@ Thumbs.db
 *.log
 
 .env.docker
+
+coverage.out
+coverage.html
 "@ | Out-File -FilePath .gitignore -Encoding utf8
